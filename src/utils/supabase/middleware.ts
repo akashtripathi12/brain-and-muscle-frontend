@@ -30,20 +30,33 @@ export async function updateSession(request: NextRequest) {
   // Refreshing the auth token
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/api/auth')
-  ) {
-    // No user, and not on an auth route -> redirect to login
+  const pathname = request.nextUrl.pathname
+  
+  // LOGGING FOR DIAGNOSTICS
+  console.log(`[middleware] Request: ${pathname} | User: ${user?.email || 'Anonymous'}`)
+
+  const isPublicRoute = 
+    pathname === '/' ||
+    pathname === '/setup' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/docs') ||
+    pathname.startsWith('/terms') ||
+    pathname.startsWith('/privacy');
+
+  if (!user && !isPublicRoute) {
+    console.log(`[middleware] Blocking unauthenticated access to ${pathname} -> Redirecting to /login`)
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
+  if (user && pathname.startsWith('/login')) {
+      console.log(`[middleware] Authenticated user on /login -> Redirecting to /dashboard`)
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signInWithGitHub } from "@/app/actions/auth";
-import { Zap, ShieldCheck, Globe, Loader2 } from "lucide-react";
+import { ShieldCheck, Globe, Loader2 } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
+import Image from "next/image";
 
 function LoginContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(false);
   const code = searchParams.get("code");
 
@@ -29,8 +29,13 @@ function LoginContent() {
     <div className="w-full">
       {/* Logo Section */}
       <div className="text-center mb-12 transform-gpu transition-all duration-700 animate-in fade-in slide-in-from-bottom-4">
-        <div className="inline-flex items-center justify-center p-4 mb-6 rounded-3xl bg-brand-primary/10 border border-brand-primary/20 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
-          <Zap className="w-10 h-10 text-brand-primary fill-brand-primary/10" />
+        <div className="inline-flex items-center justify-center">
+          <Image 
+                src="/logo2.png" 
+                alt="Brain & Muscle Logo" 
+                width={100} 
+                height={100} 
+              />
         </div>
         <h1 className="text-5xl font-extrabold tracking-tight text-white mb-3">
           Brain & <span className="text-gradient">Muscle</span>

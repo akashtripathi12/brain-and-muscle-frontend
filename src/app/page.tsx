@@ -1,15 +1,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   ShieldCheck, 
   Box, 
   Cpu, 
-  Zap, 
   ArrowRight,
   Globe,
-  Lock,
-  ZapOff
 } from "lucide-react";
 
 export default async function LandingPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
@@ -35,9 +33,14 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-md border-b border-white/5 bg-nebula-black/60">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-brand-primary/10 border border-brand-primary/20">
-              <Zap className="w-6 h-6 text-brand-primary shadow-[0_0_15px_rgba(235,0,255,0.4)]" />
+          <div className="flex items-center">
+            <div className="">
+              <Image 
+                src="/logo2.png" 
+                alt="Brain & Muscle Logo" 
+                width={110} 
+                height={60}
+              />
             </div>
             <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
               Brain & Muscle
@@ -73,7 +76,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         {/* Hero Section */}
         <section className="pt-32 pb-24 px-6">
           <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-brand-secondary text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-brand-primary text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <Globe className="w-4 h-4" />
               <span>Distributed Computing Reimagined</span>
             </div>
@@ -92,10 +95,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
               <Link 
-                href="/setup" 
+                href={session ? "/dashboard" : "/setup"} 
                 className="w-full sm:w-auto px-10 py-5 rounded-2xl bg-brand-primary text-nebula-black font-black text-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(235,0,255,0.2)]"
               >
-                START ONBOARDING
+                {session ? "GO TO DASHBOARD" : "START ONBOARDING"}
                 <ArrowRight className="w-6 h-6" />
               </Link>
               <Link 

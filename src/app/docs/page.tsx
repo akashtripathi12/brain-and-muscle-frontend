@@ -5,7 +5,6 @@ import {
   Zap, 
   Cpu, 
   Box, 
-  Globe, 
   CheckCircle2, 
   Server, 
   BookOpen,
@@ -15,9 +14,10 @@ import {
   ChevronRight,
   FileText,
   Workflow,
-  Microchip,
-  LayoutDashboard
+  LayoutDashboard,
+  Home
 } from "lucide-react";
+import Link from "next/link";
 
 const SECTIONS = [
   {
@@ -235,9 +235,18 @@ export default function DocumentationPage() {
           
           {/* Hero Header */}
           <header className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-nebula-pink/10 border border-nebula-pink/20 text-nebula-pink text-[10px] font-black uppercase tracking-widest">
-              <BookOpen className="w-3 h-3" />
-              Intelligence Core
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-nebula-pink/10 border border-nebula-pink/20 text-nebula-pink text-[10px] font-black uppercase tracking-widest">
+                <BookOpen className="w-3 h-3" />
+                Intelligence Core
+              </div>
+              <Link 
+                href="/" 
+                className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors text-xs font-black uppercase tracking-[0.2em] group"
+              >
+                <Home className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                Home
+              </Link>
             </div>
             <h1 className="text-6xl font-black tracking-tighter leading-none">
               Control Plane <span className="text-gradient">Manual</span>

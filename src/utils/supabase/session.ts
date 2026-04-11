@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
   // LOGGING FOR DIAGNOSTICS
-  console.log(`[middleware] Request: ${pathname} | User: ${user?.email || 'Anonymous'}`)
+  console.log(`[proxy] Request: ${pathname} | User: ${user?.email || 'Anonymous'}`)
 
   const isPublicRoute = 
     pathname === '/' ||
@@ -49,14 +49,14 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/privacy');
 
   if (!user && !isPublicRoute) {
-    console.log(`[middleware] Blocking unauthenticated access to ${pathname} -> Redirecting to /login`)
+    console.log(`[proxy] Blocking unauthenticated access to ${pathname} -> Redirecting to /login`)
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   if (user && pathname.startsWith('/login')) {
-      console.log(`[middleware] Authenticated user on /login -> Redirecting to /dashboard`)
+      console.log(`[proxy] Authenticated user on /login -> Redirecting to /dashboard`)
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)

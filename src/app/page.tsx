@@ -78,9 +78,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <span>Distributed Computing Reimagined</span>
             </div>
             
-            <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 italic">
+            <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 italic px-4 overflow-visible">
               UNLEASH THE<br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-primary via-nebula-purple to-brand-secondary">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-primary via-nebula-purple to-brand-secondary inline-block px-8 -mx-8 pb-4">
                 POWER OF THE CLUSTER
               </span>
             </h1>

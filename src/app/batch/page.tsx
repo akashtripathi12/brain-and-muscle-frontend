@@ -51,7 +51,7 @@ export default function BatchDeployPage() {
   const [visibleLogs, setVisibleLogs] = useState<string[]>([]);
   const logContainerRef = useRef<HTMLDivElement>(null);
 
-  // Poll for job status when running
+  // Status polling.
   useEffect(() => {
     if (!jobId || jobStatus === "COMPLETED" || jobStatus === "FAILED") return;
 
@@ -71,7 +71,7 @@ export default function BatchDeployPage() {
     return () => clearInterval(interval);
   }, [jobId, jobStatus]);
 
-  // 2. Real Log Streaming (Unified with Services)
+  // Log streaming.
   useEffect(() => {
     if (!jobId) return;
     
@@ -201,7 +201,7 @@ export default function BatchDeployPage() {
         user_script_path: saveData.scriptPath,
         source_type: "local",
         job_type: "MAP",
-        total_maps: 1, // 🚨 Ensure single node execution
+        total_maps: 1, //  Ensure single node execution
         required_cpu: cpu,
         required_ram: ram,
         run_command: runCommand ? `${runCommand} ${saveData.scriptPath}` : undefined,

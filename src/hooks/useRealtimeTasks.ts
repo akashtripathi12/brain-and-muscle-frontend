@@ -13,7 +13,7 @@ export function useRealtimeTasks(initialTasks: Deployment[]) {
   }, [initialTasks]);
 
   useEffect(() => {
-    // 1. Subscribe to the 'tasks' table for real-time updates
+    // Subscribe to 'tasks'.
     const channel = supabase
       .channel("public:tasks")
       .on(
@@ -29,8 +29,7 @@ export function useRealtimeTasks(initialTasks: Deployment[]) {
           if (payload.eventType === "INSERT") {
             const newTask = payload.new as any;
             
-            // 🚨 SCHEMA-AGNOSTIC RECOVERY: 
-            // If CPU/RAM/Type columns are missing, we extract them from the JSON payload.
+            // Schema recovery.
             let p: any = {};
             try {
               p = typeof newTask.payload === 'string' ? JSON.parse(newTask.payload) : newTask.payload;
@@ -77,7 +76,7 @@ export function useRealtimeTasks(initialTasks: Deployment[]) {
   return tasks;
 }
 
-// Helper to map DB string status to UI numeric status
+// Status mapper.
 function mapStatus(status: string): number {
   switch (status) {
     case "provisioning": return 0;

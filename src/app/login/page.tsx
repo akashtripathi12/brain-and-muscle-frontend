@@ -16,7 +16,8 @@ function LoginContent() {
     if (code) {
       setIsVerifying(true);
       // Hard redirect to the callback handler
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      // Use window.location.origin to ensure we stay on the same domain
+      const siteUrl = window.location.origin;
       const timer = setTimeout(() => {
         window.location.replace(`${siteUrl}/api/auth/callback?code=${code}`);
       }, 100);

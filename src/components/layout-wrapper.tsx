@@ -47,7 +47,7 @@ export default function LayoutWrapper({
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/auth") || pathname.startsWith("/api/auth");
   
   // Show app layout only if logged in AND not on a public route that should be clean
-  // OR if on a dashboard/internal route (which should be blocked by middleware anyway)
+  // OR if on a dashboard/internal route (which should be blocked by proxy anyway)
   const showAppLayout = !!session && !isPublicRoute;
 
   if (!showAppLayout) {

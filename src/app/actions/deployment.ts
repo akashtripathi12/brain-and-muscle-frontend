@@ -50,7 +50,7 @@ export async function importProject(repoFullName: string) {
       if (existingHooksResponse.ok) {
         const hooks = await existingHooksResponse.json();
         
-        // 🚨 CLEANUP: Delete any OLD hooks that point to our system but have a different URL
+        //  CLEANUP: Delete any OLD hooks that point to our system but have a different URL
         // (e.g., from old Ngrok sessions or previous setups)
         const ourHooks = hooks.filter((h: any) => h.config.url.includes("/api/webhooks/github"));
         
@@ -191,7 +191,7 @@ export async function finalizeDeployment(config: DeploymentConfig) {
     project_id: importResult.projectId,
     source_type: "github",
     git_repo: `https://github.com/` + config.repoFullName,
-    user_script_path: `https://github.com/` + config.repoFullName, // 🚨 CRITICAL: Required by Brain validation
+    user_script_path: `https://github.com/` + config.repoFullName, //  CRITICAL: Required by Brain validation
     branch_name: defaultBranch,
     commit_hash: latestHash,
     build_command: config.buildQuery,

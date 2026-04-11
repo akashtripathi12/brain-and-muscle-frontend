@@ -3,13 +3,14 @@
 
 import { createClient } from '@/utils/supabase/server'; // Your Supabase SSR setup
 import { redirect } from 'next/navigation';
+import { getURL } from '@/utils/url';
 
 export async function signInWithGitHub() {
     const supabase = await createClient();
     
-    // Explicit Site URL from env or fallback to localhost
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const redirectTo = `${siteUrl}/api/auth/callback`;
+    // Explicit Site URL from global utility
+    const siteUrl = getURL();
+    const redirectTo = `${siteUrl}api/auth/callback`;
 
     console.log(`[auth] Triggering GitHub OAuth. Redirecting to: ${redirectTo}`);
 

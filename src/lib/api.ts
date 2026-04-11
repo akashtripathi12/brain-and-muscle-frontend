@@ -52,8 +52,7 @@ async function brainFetch<T>(endpoint: string, options: RequestInit & { token?: 
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
-  // 🚨 MIGRATION FIX: Only send API Key if we don't have a user token
-  // This prevents the Brain from 'shadowing' the user identity with the System ID.
+  // Auth logic: Prioritize user token.
   if (options.token) {
     headers.set("Authorization", `Bearer ${options.token}`);
   } else {

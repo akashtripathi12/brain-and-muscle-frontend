@@ -3,24 +3,37 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
   CheckCircle2,
   Globe,
   LayoutDashboard,
+  LogOut,
   Rocket,
   Server,
   Zap,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 const navItems = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/deployments", label: "Services", icon: Zap },
   { href: "/batch", label: "Batch", icon: CheckCircle2 },
   { href: "/distributed", label: "Distributed", icon: Globe },
   { href: "/fleet", label: "Muscle Fleet", icon: Server },
+  { href: "/docs", label: "Documentation", icon: BookOpen },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.refresh();
+    router.push("/");
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-white/5 bg-nebula-black xl:flex transition-all duration-500">
@@ -73,8 +86,8 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Action Zone: New Deployment */}
-      <div className="mt-auto border-t border-white/5 p-4">
+      {/* Action Zone: New Deployment & Logout */}
+      <div className="mt-auto border-t border-white/5 p-4 space-y-2">
         <button 
           className="btn-primary w-full flex items-center justify-center gap-3 py-4 shadow-2xl !bg-gradient-to-br from-nebula-pink to-nebula-purple border border-white/10 group"
         >
@@ -84,6 +97,21 @@ export default function Sidebar() {
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">⌘</span>
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">N</span>
           </div>
+        </button>
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all group"
+        >
+          <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span>Logout Session</span>
+        </button>
+
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent("bam:open-support"))}
+          className="w-full py-3.5 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-white hover:bg-white/[0.02] transition-all"
+        >
+          Report an Issue
         </button>
       </div>
     </aside>

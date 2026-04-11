@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ShieldCheck, 
@@ -13,9 +13,11 @@ import {
   ExternalLink,
   ChevronRight,
   Loader2,
-  Zap,
-  Terminal
+  Terminal,
+  Home
 } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 interface StepData {
   id: string;
@@ -66,8 +68,7 @@ const STEPS: StepData[] = [
     details: [
       "Download the bam-muscle.exe binary",
       "Run 'bam-muscle.exe --service install' as Admin (automatically starts)",
-      "If it doesn't start, run 'bam-muscle.exe --service start'",
-      "Verify the connection below"
+      "If it doesn't start, run 'bam-muscle.exe --service start'"
     ],
     link: "/bam-muscle.exe",
     command: "bam-muscle.exe --service install\nbam-muscle.exe --service start"
@@ -105,22 +106,6 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
     router.push(isLoggedIn ? "/dashboard" : "/login");
   };
 
-  const verifyMuscle = async () => {
-    setIsVerifying(true);
-    try {
-      // Attempt to probe the local Muscle worker's log server port
-      const res = await fetch("http://localhost:9012/logs/health", { mode: 'no-cors' });
-      // If we get here without an error, something is listening on that port
-      setIsMuscleOnline(true);
-    } catch (err) {
-      console.log("Muscle probe failed:", err);
-      // Wait 1.5s to simulate "thinking" for better UX
-      await new Promise(r => setTimeout(r, 1500));
-      setIsMuscleOnline(false);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
 
   let currentStepData: StepData = { ...STEPS[currentStep] };
 
@@ -132,8 +117,7 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
           "Download the bam-muscle.exe binary",
           "Portable Mode: Run 'bam-muscle.exe --cpu 2 --ram 2048'",
           "Service Mode (Optional): Run 'bam-muscle.exe --service install' as Admin",
-          "Default Specs: 2 CPU / 2048 MB RAM unless specified",
-          "Verify the connection below"
+          "Default Specs: 2 CPU / 2048 MB RAM unless specified"
         ],
         link: "/bam-muscle.exe",
         command: "bam-muscle.exe --cpu 2 --ram 2048"
@@ -142,8 +126,7 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
         details: [
           "Download the muscle-linux binary",
           "Give execution permissions: 'chmod +x muscle-linux'",
-          "Run with specs: './muscle-linux --cpu 2 --ram 2048 &'",
-          "Verify connectivity below"
+          "Run with specs: './muscle-linux --cpu 2 --ram 2048 &'"
         ],
         link: "/muscle-linux",
         command: "chmod +x muscle-linux\n./muscle-linux --cpu 2 --ram 2048 &"
@@ -152,8 +135,7 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
         details: [
           "Download macOS arm64 binary",
           "Grant permissions: 'chmod +x muscle-macos-arm64'",
-          "Execute: './muscle-macos-arm64 --cpu 2 --ram 2048'",
-          "Verify connectivity below"
+          "Execute: './muscle-macos-arm64 --cpu 2 --ram 2048'"
         ],
         link: "/muscle-macos-arm64",
         command: "chmod +x muscle-macos-arm64\n./muscle-macos-arm64 --cpu 2 --ram 2048"
@@ -168,15 +150,31 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
 
   return (
     <div className="min-h-screen bg-nebula-black text-white selection:bg-nebula-pink/30 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Navigation */}
+      <div className="fixed top-10 left-10 z-50">
+        <Link 
+          href="/" 
+          className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest group"
+        >
+          <Home className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Home
+        </Link>
+      </div>
+
       {/* Background Gradients */}
       <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-nebula-purple/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-nebula-pink/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-4xl w-full z-10">
+      <div className="max-w-4xl w-full z-10 relative">
         {/* Header */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="inline-flex items-center justify-center p-3 mb-6 rounded-2xl bg-brand-primary/10 border border-brand-primary/20">
-            <Zap className="w-8 h-8 text-brand-primary fill-brand-primary/10" />
+          <div className="flex items-center justify-center">
+            <Image 
+              src="/logo2.png" 
+              alt="Brain & Muscle Logo" 
+              width={160} 
+              height={100} 
+            />
           </div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
             Initialize <span className="text-gradient">Intelligence</span>
@@ -289,6 +287,7 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
                 href={currentStepData.link} 
                 target="_blank" 
                 rel="noopener noreferrer"
+                onClick={() => setIsMuscleOnline(true)}
                 className="btn-primary w-full gap-2"
               >
                 <Download className="w-4 h-4" />
@@ -307,19 +306,6 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
                 </a>
               )}
 
-              {currentStep === 2 && (
-                <button 
-                  onClick={verifyMuscle}
-                  disabled={isVerifying || isMuscleOnline}
-                  className={`w-full py-4 rounded-xl border flex items-center justify-center gap-2 transition-all duration-300 ${
-                    isMuscleOnline 
-                    ? 'border-green-500/50 bg-green-500/10 text-green-500' 
-                    : 'border-white/10 hover:bg-white/5 text-gray-400'
-                  }`}
-                >
-                  {isVerifying ? "Verifying..." : isMuscleOnline ? "Connection Active" : "Verify Connection"}
-                </button>
-              )}
             </div>
           </div>
 

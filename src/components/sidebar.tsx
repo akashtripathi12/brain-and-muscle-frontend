@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -40,8 +41,13 @@ export default function Sidebar() {
       {/* Brand Logo */}
       <div className="flex h-20 items-center justify-between px-6 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-nebula-pink/10 border border-nebula-pink/20 shadow-[0_0_20px_rgba(166,77,121,0.1)]">
-            <Zap className="h-6 w-6 text-nebula-pink fill-nebula-pink" />
+          <div className="flex items-center justify-center">
+            <Image 
+              src="/logo2.png" 
+              alt="Brain & Muscle Logo" 
+              width={100} 
+              height={80} 
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">

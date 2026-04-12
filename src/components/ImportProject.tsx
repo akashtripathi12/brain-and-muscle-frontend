@@ -25,15 +25,20 @@ export default function ImportProject() {
     async function loadRepos() {
       try {
         setLoading(true);
-        const data = await getGitHubRepositories();
-        setRepos(data);
-        setError(null);
-      } catch (err: any) {
-        if (err.message === "GITHUB_TOKEN_MISSING") {
-          setError("RECONNECT_GITHUB");
-        } else {
-          setError("Failed to fetch repositories. Ensure your GitHub account is connected.");
+        const data = await getGitHubRepositories() as { error?: string, repos?: Repository[] };
+        
+        if (data.error) {
+          if (data.error === "GITHUB_TOKEN_MISSING") {
+            setError("RECONNECT_GITHUB");
+          } else {
+            setError(data.error);
+          }
+        } else if (data.repos) {
+          setRepos(data.repos);
+          setError(null);
         }
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch repositories.");
       } finally {
         setLoading(false);
       }

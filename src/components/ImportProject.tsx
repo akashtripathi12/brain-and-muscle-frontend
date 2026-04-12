@@ -101,13 +101,23 @@ export default function ImportProject() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-6 py-3 mr-1 text-sm font-bold text-gray-400 hover:text-white transition-all bg-white/[0.03] hover:bg-white/[0.05] rounded-[1.5rem] border border-white/5"
-        >
-          <RefreshCcw className="h-4 w-4" />
-          Refresh GitHub
-        </button>
+        <div className="flex gap-2 mr-1">
+          <Link
+            href="https://github.com/apps/brainandmuscle-dev/installations/new"
+            target="_blank"
+            className="flex items-center gap-2 px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-white transition-all bg-brand-primary/20 hover:bg-brand-primary/30 rounded-[1.5rem] border border-brand-primary/50 shadow-[0_0_15px_rgba(255,107,158,0.2)]"
+          >
+            <FaGithub className="h-4 w-4" />
+            Connect GitHub Repositories
+          </Link>
+          <button 
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-gray-400 hover:text-white transition-all bg-white/[0.03] hover:bg-white/[0.05] rounded-[1.5rem] border border-white/5"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Refresh GitHub
+          </button>
+        </div>
       </div>
 
       {/* Messaging */}

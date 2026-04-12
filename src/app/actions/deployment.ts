@@ -233,7 +233,7 @@ export async function getGitHubRepositories() {
   
   if (!session?.provider_token) {
     console.warn("[github] No provider token found in session.");
-    throw new Error("GITHUB_SESSION_EXPIRED: Please log out and sign back in with GitHub.");
+    throw new Error("GITHUB_TOKEN_MISSING");
   }
 
   // 1. Get User's Installations

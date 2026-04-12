@@ -55,6 +55,7 @@ export default function NewDistributedPage() {
       console.log("🔑 [deploy] Fetching Supabase session...");
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
+      const userEmail = session?.user?.email;
       
       if (token) {
         console.log("✅ [deploy] Auth token acquired.");
@@ -85,7 +86,7 @@ export default function NewDistributedPage() {
           "DATASET_PATH": datasetInput,
           "REPORT_DIR": reportInput
         }
-      }, token);
+      }, token, userEmail);
 
       console.log("🏆 [deploy] SUCCESS! Redirecting to monitor:", deployRes.job_id);
       router.push(`/distributed/${deployRes.job_id}`);

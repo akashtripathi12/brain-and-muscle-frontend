@@ -18,7 +18,12 @@ export async function signInWithGitHub() {
         provider: 'github',
         options: {
             redirectTo: redirectTo,
-            scopes: 'repo admin:repo_hook' 
+            scopes: 'repo admin:repo_hook',
+            // Force GitHub consent screen so users always grant 'repo' scope for private repos.
+            // Without this, GitHub reuses a cached token that may be missing private repo access.
+            queryParams: {
+                prompt: 'consent',
+            },
         },
     });
 

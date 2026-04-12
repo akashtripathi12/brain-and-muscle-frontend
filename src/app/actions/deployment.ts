@@ -207,7 +207,8 @@ export async function finalizeDeployment(config: DeploymentConfig) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-API-Key": process.env.NEXT_PUBLIC_BRAIN_API_KEY || "",
+      "X-API-Key": process.env.NEXT_PUBLIC_BRAIN_API_KEY || process.env.BRAIN_API_KEY || "",
+      "X-User-Identity": user.email || user.id,
       "Authorization": `Bearer ${session.access_token}`,
     },
     body: JSON.stringify(deployPayload),

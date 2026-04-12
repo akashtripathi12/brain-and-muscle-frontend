@@ -103,4 +103,5 @@ export const api = {
   getDownloadUrl: (jobId: string, token?: string, userEmail?: string) =>
     brainFetch<{ job_id: string; download_url: string }>(`/api/tasks/${jobId}/download`, { token, userEmail }),
   getHistory: (token?: string, userEmail?: string) => brainFetch<Deployment[]>("/api/history", { token, userEmail }),
+  getJob: (jobId: string, token?: string, userEmail?: string) => brainFetch<Deployment>(`/api/jobs/${jobId}`, { token, userEmail }),
 };

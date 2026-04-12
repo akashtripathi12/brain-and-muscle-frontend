@@ -233,7 +233,7 @@ export async function getGitHubRepositories() {
   
   if (!session?.provider_token) {
     console.warn("[github] No provider token found in session.");
-    throw new Error("GITHUB_TOKEN_MISSING");
+    return { error: "GITHUB_TOKEN_MISSING" };
   }
 
   // 1. Get User's Installations
@@ -247,7 +247,7 @@ export async function getGitHubRepositories() {
   if (!userInstallationsRes.ok) {
     const error = await userInstallationsRes.text();
     console.error("[github] Failed to fetch user installations:", error);
-    return [];
+    return { error: "Failed to fetch user installations from GitHub: " + error };
   }
 
   const { installations } = await userInstallationsRes.json();
@@ -258,14 +258,14 @@ export async function getGitHubRepositories() {
 
   if (!appInstallation) {
     // User hasn't installed the app
-    return [];
+    return { error: `GitHub App (ID: ${appId}) is not installed on this account.` };
   }
 
   // 2. Generate JWT for the GitHub App
   const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
   if (!privateKey) {
     console.error("[github] Missing GITHUB_APP_PRIVATE_KEY in environment variables.");
-    throw new Error("Server configuration error. Please contact support.");
+    return { error: "Server configuration error (missing private key). Please contact support." };
   }
 
   // Normalize the private key (handle actual newlines if stored as a single line string)
@@ -294,7 +294,12 @@ export async function getGitHubRepositories() {
   if (!tokenRes.ok) {
     const error = await tokenRes.text();
     console.error("[github] Failed to generate installation token:", error);
-    throw new Error("Failed to authenticate with GitHub App.");
+    try {
+      const errObj = JSON.parse(error);
+      return { error: "GitHub App Auth Failed: " + (errObj.message || error) };
+    } catch (e) {
+      return { error: "Failed to authenticate with GitHub App." };
+    }
   }
 
   const { token: installationToken } = await tokenRes.json();
@@ -310,13 +315,15 @@ export async function getGitHubRepositories() {
   if (!reposRes.ok) {
     const error = await reposRes.text();
     console.error("[github] Failed to fetch installation repositories:", error);
-    return [];
+    return { error: "Failed to fetch installation repositories: " + error };
   }
 
   const { repositories } = await reposRes.json();
-  return repositories.map((r: any) => ({
-    id: r.id,
-    full_name: r.full_name,
-    private: r.private,
-  }));
+  return {
+    repos: repositories.map((r: any) => ({
+      id: r.id,
+      full_name: r.full_name,
+      private: r.private,
+    }))
+  };
 }

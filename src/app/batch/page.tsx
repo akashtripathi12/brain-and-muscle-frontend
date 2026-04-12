@@ -91,56 +91,56 @@ export default function BatchDeployPage() {
           signal: controller.signal,
         });
 
+        if (response.status === 404) {
+          // Blob doesn't exist yet — worker hasn't synced logs yet. Wait silently.
+          if (isMounted) setTimeout(streamLogs, 5000);
+          return;
+        }
+
         if (!response.ok) throw new Error("Log stream failed");
 
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-
-        if (!reader) return;
-
-        while (isMounted) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          // Split into lines for better display
-          const rawLines = chunk.split('\n');
-          
-          if (isMounted) {
-            const localizedLines = rawLines
-              .map(line => {
-                if (!line.trim()) return null;
-                // Docker format: 2026-04-10T00:20:56.546768952Z ...
-                const match = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s?(.*)$/);
-                if (match) {
-                  const utcTime = match[1];
-                  const content = match[2];
-                  try {
-                    const localTime = new Date(utcTime).toLocaleTimeString([], { 
-                      hour12: false, 
-                      hour: '2-digit', 
-                      minute: '2-digit', 
-                      second: '2-digit' 
-                    });
-                    return `[${localTime}] ${content}`;
-                  } catch (e) {
-                    return line;
-                  }
-                }
-                return line;
-              })
-              .filter((l): l is string => l !== null);
-
-            setVisibleLogs((prev) => [...prev, ...localizedLines]);
-          }
+        const text = await response.text();
+        if (!text.trim()) {
+          // Empty log — retry
+          if (isMounted) setTimeout(streamLogs, 5000);
+          return;
         }
+
+        const rawLines = text.split('\n');
+        if (isMounted) {
+          const localizedLines = rawLines
+            .map(line => {
+              if (!line.trim()) return null;
+              // Docker format: 2026-04-10T00:20:56.546768952Z ...
+              const match = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s?(.*)$/);
+              if (match) {
+                const utcTime = match[1];
+                const content = match[2];
+                try {
+                  const localTime = new Date(utcTime).toLocaleTimeString([], { 
+                    hour12: false, 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                  });
+                  return `[${localTime}] ${content}`;
+                } catch (e) {
+                  return line;
+                }
+              }
+              return line;
+            })
+            .filter((l): l is string => l !== null);
+
+          setVisibleLogs(localizedLines);
+        }
+
+        // Poll again after 5s to pick up new log lines from the worker
+        if (isMounted) setTimeout(streamLogs, 5000);
+
       } catch (err: any) {
-        if (err.name !== "AbortError") {
-          console.error("Stream error:", err);
-          if (isMounted) {
-            setVisibleLogs((prev) => [...prev, "--- Log stream disconnected, retrying in 3s... ---"]);
-            setTimeout(streamLogs, 3000);
-          }
+        if (err.name !== "AbortError" && isMounted) {
+          setTimeout(streamLogs, 5000);
         }
       }
     }

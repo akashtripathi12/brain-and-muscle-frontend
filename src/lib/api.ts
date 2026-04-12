@@ -29,7 +29,9 @@ export interface Deployment {
 }
 
 export interface DeployRequest {
-  user_script_path: string;
+  user_script_path?: string;
+  code?: string;
+  extension?: string;
   git_repo?: string;
   required_cpu: number;
   required_ram: number;

@@ -48,17 +48,20 @@ export interface DeployRequest {
   gather_script_path?: string;
 }
 
-async function brainFetch<T>(endpoint: string, options: RequestInit & { token?: string } = {}): Promise<T> {
+async function brainFetch<T>(endpoint: string, options: RequestInit & { token?: string; userEmail?: string } = {}): Promise<T> {
   const url = `${BRAIN_URL}${endpoint}`;
   
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
-  // Auth logic: Prioritize user token.
+  // Auth logic: Prioritize user JWT, always attach identity for task ownership.
   if (options.token) {
     headers.set("Authorization", `Bearer ${options.token}`);
-  } else {
-    headers.set("X-API-Key", process.env.NEXT_PUBLIC_BRAIN_API_KEY || "");
+  }
+  // Always send API key for access + X-User-Identity so Brain knows who owns the task
+  headers.set("X-API-Key", process.env.NEXT_PUBLIC_BRAIN_API_KEY || "");
+  if (options.userEmail) {
+    headers.set("X-User-Identity", options.userEmail);
   }
 
   const response = await fetch(url, {
@@ -76,25 +79,28 @@ async function brainFetch<T>(endpoint: string, options: RequestInit & { token?: 
 
 export const api = {
   host: BRAIN_URL,
-  getNodes: (token?: string) => brainFetch<Node[]>("/api/nodes", { token }),
-  getDeployments: (token?: string) => brainFetch<Deployment[]>("/api/deployments", { token }),
-  deploy: (data: DeployRequest, token?: string) => 
+  getNodes: (token?: string, userEmail?: string) => brainFetch<Node[]>("/api/nodes", { token, userEmail }),
+  getDeployments: (token?: string, userEmail?: string) => brainFetch<Deployment[]>("/api/deployments", { token, userEmail }),
+  deploy: (data: DeployRequest, token?: string, userEmail?: string) => 
     brainFetch<{ status: string; index: number; job_id: string }>("/api/deploy", {
       method: "POST",
       body: JSON.stringify(data),
       token,
+      userEmail,
     }),
-  killDeployment: (jobId: string, token?: string) =>
+  killDeployment: (jobId: string, token?: string, userEmail?: string) =>
     brainFetch<{ status: string; task_id: string; job_id: string }>(`/api/kill/${jobId}`, {
       method: "POST",
       token,
+      userEmail,
     }),
-  deleteDeployment: (jobId: string, token?: string) =>
+  deleteDeployment: (jobId: string, token?: string, userEmail?: string) =>
     brainFetch<{ status: string; job_id: string }>(`/api/delete/${jobId}`, {
       method: "POST",
       token,
+      userEmail,
     }),
-  getDownloadUrl: (jobId: string, token?: string) =>
-    brainFetch<{ job_id: string; download_url: string }>(`/api/tasks/${jobId}/download`, { token }),
-  getHistory: (token?: string) => brainFetch<Deployment[]>("/api/history", { token }),
+  getDownloadUrl: (jobId: string, token?: string, userEmail?: string) =>
+    brainFetch<{ job_id: string; download_url: string }>(`/api/tasks/${jobId}/download`, { token, userEmail }),
+  getHistory: (token?: string, userEmail?: string) => brainFetch<Deployment[]>("/api/history", { token, userEmail }),
 };

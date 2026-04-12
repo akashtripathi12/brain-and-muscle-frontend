@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import { Play, Loader2, Code2, Database, FolderDown, Download, CheckCircle, Activity, Terminal, AlertTriangle } from "lucide-react";
 import { api } from "@/lib/api";
+import { createClient } from "@/utils/supabase/client";
 
 const langDefaults = {
   python: `import sys
@@ -43,6 +44,8 @@ export default function BatchDeployPage() {
   
   const [cpu, setCpu] = useState(2);
   const [ram, setRam] = useState(512);
+
+  const supabase = createClient();
 
   const [isDeploying, setIsDeploying] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -172,6 +175,10 @@ export default function BatchDeployPage() {
     setJobStatus("PROVISIONING");
 
     try {
+      const { data: { session, user: sbUser } } = await supabase.auth.getSession() as any;
+      const token = session?.access_token as string | undefined;
+      const userEmail = sbUser?.email || session?.user?.email;
+
       // Prepare execution strategy
       let runCommand = "";
       if (language === "python") runCommand = "python3";
@@ -197,7 +204,7 @@ export default function BatchDeployPage() {
           "DATASET_PATH": datasetInput,
           "REPORT_DIR": reportInput
         }
-      });
+      }, token, userEmail);
 
       setJobId(deployRes.job_id);
 

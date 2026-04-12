@@ -62,17 +62,6 @@ export default function NewDistributedPage() {
         console.warn("⚠️ [deploy] No auth token found. Falling back to System key.");
       }
 
-      console.log("💾 [deploy] Saving user script to /api/scripts...");
-      const saveRes = await fetch("/api/scripts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, extension: exts[language] })
-      });
-      const saveData = await saveRes.json();
-      
-      if (!saveRes.ok) throw new Error(saveData.error || "Failed to save script");
-      console.log("✅ [deploy] Script saved at:", saveData.scriptPath);
-
       let runCommand = "";
       if (language === "python") runCommand = "python3";
       if (language === "javascript") runCommand = "node";
@@ -81,16 +70,16 @@ export default function NewDistributedPage() {
 
       const args = argsInput ? argsInput.split(",").map(s => s.trim()) : [];
 
-      console.log("🧠 [deploy] Sending POST to Brain API (/api/deploy)...");
+      console.log("🧠 [deploy] Sending POST to Brain API (/api/deploy) with raw code for cloud staging...");
       const deployRes = await api.deploy({
-        user_script_path: saveData.scriptPath,
-        gather_script_path: saveData.scriptPath,
+        code,
+        extension: exts[language],
         source_type: "local",
         job_type: jobMode === "ML_TRAIN" ? "ML_TRAIN" : "MAP", 
         total_maps: totalNodes,
         required_cpu: cpu,
         required_ram: ram,
-        run_command: runCommand ? `${runCommand} ${saveData.scriptPath}` : undefined,
+        run_command: runCommand, // Brain will append filename after staging
         args,
         env: {
           "DATASET_PATH": datasetInput,

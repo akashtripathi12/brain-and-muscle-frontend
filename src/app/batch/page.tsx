@@ -172,39 +172,26 @@ export default function BatchDeployPage() {
     setJobStatus("PROVISIONING");
 
     try {
-      // 1. Save the code to local NextJS server disk
-      const saveRes = await fetch("/api/scripts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, extension: exts[language] })
-      });
-      const saveData = await saveRes.json();
-      
-      if (!saveRes.ok) {
-        throw new Error(saveData.error || "Failed to save script internally");
-      }
-
       // Prepare execution strategy
       let runCommand = "";
       if (language === "python") runCommand = "python3";
       if (language === "javascript") runCommand = "node";
       if (language === "go") runCommand = "go run";
-      // for cpp we would normally need build & run, but let's assume muscle might handle it or we use run_command "g++ script.cpp -o out && ./out"
       if (language === "cpp") runCommand = "g++ -o /app/out.out";
 
       // Build task args logic
-      // Passing dataset to the script as an argument natively
       const args = argsInput ? argsInput.split(",").map(s => s.trim()) : [];
 
-      // 2. Submit to Brain
+      // 1. Submit to Brain directly with raw code for cloud staging
       const deployRes = await api.deploy({
-        user_script_path: saveData.scriptPath,
+        code,
+        extension: exts[language],
         source_type: "local",
         job_type: "MAP",
-        total_maps: 1, //  Ensure single node execution
+        total_maps: 1, // Ensure single node execution
         required_cpu: cpu,
         required_ram: ram,
-        run_command: runCommand ? `${runCommand} ${saveData.scriptPath}` : undefined,
+        run_command: runCommand, // Brain will append filename after staging
         args,
         env: {
           "DATASET_PATH": datasetInput,

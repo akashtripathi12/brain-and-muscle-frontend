@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 const BRAIN_URL = process.env.NEXT_PUBLIC_BRAIN_URL || "http://localhost:8888";
 const WEBHOOK_URL_BASE = process.env.BRAIN_WEBHOOK_URL || BRAIN_URL;
@@ -235,24 +236,85 @@ export async function getGitHubRepositories() {
     throw new Error("GITHUB_SESSION_EXPIRED: Please log out and sign back in with GitHub.");
   }
 
-  // Fetch with all visibility and affiliations (owner, collab, org_member)
-  const url = "https://api.github.com/user/repos?visibility=all&affiliation=owner,collaborator,organization_member&sort=updated&per_page=100";
-  
-  const response = await fetch(url, {
+  // 1. Get User's Installations
+  const userInstallationsRes = await fetch("https://api.github.com/user/installations", {
     headers: {
       "Authorization": `Bearer ${session.provider_token}`,
       "Accept": "application/vnd.github+json",
     },
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("[github] API Error:", error);
+  if (!userInstallationsRes.ok) {
+    const error = await userInstallationsRes.text();
+    console.error("[github] Failed to fetch user installations:", error);
     return [];
   }
 
-  const repos = await response.json();
-  return repos.map((r: any) => ({
+  const { installations } = await userInstallationsRes.json();
+  const appId = process.env.GITHUB_APP_ID;
+
+  // Find the installation for our specific GitHub App
+  const appInstallation = installations.find((inst: any) => inst.app_id.toString() === appId);
+
+  if (!appInstallation) {
+    // User hasn't installed the app
+    return [];
+  }
+
+  // 2. Generate JWT for the GitHub App
+  const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+  if (!privateKey) {
+    console.error("[github] Missing GITHUB_APP_PRIVATE_KEY in environment variables.");
+    throw new Error("Server configuration error. Please contact support.");
+  }
+
+  // Normalize the private key (handle actual newlines if stored as a single line string)
+  const normalizedKey = privateKey.replace(/\\n/g, '\n');
+
+  const now = Math.floor(Date.now() / 1000);
+  const token = jwt.sign(
+    {
+      iat: now - 60, // Issued 60 seconds ago (clock drift)
+      exp: now + 10 * 60, // Expires in 10 minutes
+      iss: appId,
+    },
+    normalizedKey,
+    { algorithm: "RS256" }
+  );
+
+  // 3. Exchange JWT for Installation Access Token
+  const tokenRes = await fetch(`https://api.github.com/app/installations/${appInstallation.id}/access_tokens`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/vnd.github+json",
+    },
+  });
+
+  if (!tokenRes.ok) {
+    const error = await tokenRes.text();
+    console.error("[github] Failed to generate installation token:", error);
+    throw new Error("Failed to authenticate with GitHub App.");
+  }
+
+  const { token: installationToken } = await tokenRes.json();
+
+  // 4. Fetch repositories accessible to this installation
+  const reposRes = await fetch("https://api.github.com/installation/repositories?per_page=100", {
+    headers: {
+      "Authorization": `Bearer ${installationToken}`,
+      "Accept": "application/vnd.github+json",
+    },
+  });
+
+  if (!reposRes.ok) {
+    const error = await reposRes.text();
+    console.error("[github] Failed to fetch installation repositories:", error);
+    return [];
+  }
+
+  const { repositories } = await reposRes.json();
+  return repositories.map((r: any) => ({
     id: r.id,
     full_name: r.full_name,
     private: r.private,

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { signOut } from "@/app/actions/auth";
-import { Bell, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 
 export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
@@ -32,18 +31,19 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   }, [supabase]);
 
   const handleLogout = async () => {
-    await signOut();
+    await supabase.auth.signOut();
     router.refresh();
+    router.push("/");
   };
 
   const getPageTitle = () => {
     const segments = pathname.split("/").filter(Boolean);
-    if (segments.length === 0) return "Overview"; // Home/Landing
+    if (segments.length === 0) return "Overview";
     return segments[0].charAt(0).toUpperCase() + segments[0].slice(1);
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-nebula-black/60 px-4 md:px-8 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-black/60 px-4 md:px-8 backdrop-blur-xl">
       {/* Left: Page context */}
       <div className="flex items-center gap-4">
         {/* Mobile Menu Button */}
@@ -78,7 +78,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
           </div>
 
           <div className="relative group/menu">
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-nebula-maroon border border-white/5 transition-transform hover:scale-105 active:scale-95">
+            <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 border border-white/5 transition-transform hover:scale-105 active:scale-95">
               {profile?.avatar ? (
                 <Image src={profile.avatar} alt={profile.name} width={40} height={40} className="rounded-xl object-cover" />
               ) : (
@@ -88,7 +88,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
             {/* Dropdown Menu (Hover-based for density) */}
             <div className="absolute right-0 top-full pt-2 w-48 scale-95 opacity-0 pointer-events-none group-hover/menu:scale-100 group-hover/menu:opacity-100 group-hover/menu:pointer-events-auto transition-all duration-200">
-              <div className="rounded-xl border border-white/5 bg-nebula-black p-2 shadow-2xl backdrop-blur-2xl">
+              <div className="rounded-xl border border-zinc-800 bg-black p-2 shadow-2xl backdrop-blur-2xl">
                 <Link href="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
                   <User className="w-4 h-5" />
                   Profile Account

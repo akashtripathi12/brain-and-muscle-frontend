@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 import {
   ArrowLeft,
   Download,
@@ -36,13 +37,17 @@ export default function DistributedMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [visibleLogs, setVisibleLogs] = useState<string[]>([]);
   const logContainerRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
 
   // 1. Polling for Job Metadata
   useEffect(() => {
     async function load() {
       try {
-        const history = await api.getHistory(); // Use history for persistence
-        const found = history.find(j => j.job_id === id) || (await api.getDeployments()).find(j => j.job_id === id);
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        const history = await api.getHistory(token); // Use history for persistence
+        const found = history.find(j => j.job_id === id) || (await api.getDeployments(token)).find(j => j.job_id === id);
         setJob(found || null);
       } catch (err) {
         console.error("Failed to load job details:", err);
@@ -53,7 +58,7 @@ export default function DistributedMonitorPage() {
     load();
     const interval = setInterval(load, 5000);
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, supabase]);
 
   // 2. Real Log Streaming
   useEffect(() => {

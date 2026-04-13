@@ -190,7 +190,7 @@ export async function finalizeDeployment(config: DeploymentConfig) {
   const deployPayload = {
     job_type: "SERVICE",
     project_id: importResult.projectId,
-    source_type: "github",
+    source_type: "github", 
     git_repo: `https://github.com/` + config.repoFullName,
     user_script_path: `https://github.com/` + config.repoFullName, //  CRITICAL: Required by Brain validation
     branch_name: defaultBranch,
@@ -242,6 +242,7 @@ export async function getGitHubRepositories() {
       "Authorization": `Bearer ${session.provider_token}`,
       "Accept": "application/vnd.github+json",
     },
+    cache: 'no-store',
   });
 
   if (!userInstallationsRes.ok) {
@@ -289,6 +290,7 @@ export async function getGitHubRepositories() {
       "Authorization": `Bearer ${token}`,
       "Accept": "application/vnd.github+json",
     },
+    cache: 'no-store',
   });
 
   if (!tokenRes.ok) {
@@ -310,6 +312,7 @@ export async function getGitHubRepositories() {
       "Authorization": `Bearer ${installationToken}`,
       "Accept": "application/vnd.github+json",
     },
+    cache: 'no-store',
   });
 
   if (!reposRes.ok) {

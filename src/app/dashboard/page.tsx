@@ -22,8 +22,7 @@ export default async function DashboardPage() {
       api.getDeployments(token),
     ]);
   } catch (err) {
-    console.error("[dashboard] SSR fetch failed:", err);
-    // Continue anyway; the client will retry
+    console.error("[dashboard] API connection failed:", err);
   }
 
   return (

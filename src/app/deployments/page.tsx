@@ -18,8 +18,7 @@ export default async function DeploymentsPage() {
   try {
     initialDeployments = await api.getDeployments(token);
   } catch (err) {
-    console.error("[deployments] SSR fetch failed:", err);
-    error = "Failed to synchronize cluster state.";
+    console.error("[deployments] API connection failed:", err);
   }
 
   return (

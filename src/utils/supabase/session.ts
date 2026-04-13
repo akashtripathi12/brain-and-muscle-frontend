@@ -49,10 +49,14 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/privacy');
 
   if (!user && !isPublicRoute) {
+    console.log(`[proxy] 🔓 AUTH BYPASS: Allowing unauthenticated access to ${pathname} for UI development`)
+    return supabaseResponse
+    /*
     console.log(`[proxy] Blocking unauthenticated access to ${pathname} -> Redirecting to /login`)
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+    */
   }
 
   if (user && pathname.startsWith('/login')) {

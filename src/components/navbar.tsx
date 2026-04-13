@@ -1,58 +1,125 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  Bell, 
-  Search, 
-  Command,
-  User,
-  ShieldCheck
+import {
+  BookOpen,
+  CheckCircle2,
+  Globe,
+  LayoutDashboard,
+  LogOut,
+  Rocket,
+  Server,
+  Zap,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-export default function Navbar() {
+const navItems = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/deployments", label: "Services", icon: Zap },
+  { href: "/batch", label: "Batch", icon: CheckCircle2 },
+  { href: "/distributed", label: "Distributed", icon: Globe },
+  { href: "/fleet", label: "Muscle Fleet", icon: Server },
+  { href: "/docs", label: "Documentation", icon: BookOpen },
+];
+
+export default function Sidebar() {
   const pathname = usePathname();
-  const pageTitle = pathname.split("/").pop() || "Overview";
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.refresh();
+    router.push("/");
+  };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#111] bg-black/80 px-4 backdrop-blur-md md:px-8">
-      <div className="flex items-center gap-4">
-        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">
-          {pageTitle}
-        </h2>
-        <div className="hidden h-4 w-px bg-[#222] md:block" />
-        <div className="hidden items-center gap-2 md:flex">
-          <div className="flex items-center gap-1.5 rounded-full bg-zinc-900 px-2.5 py-1 border border-[#333]">
-            <ShieldCheck className="h-3 w-3 text-white" />
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Protocol Secured</span>
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-white/5 bg-nebula-black xl:flex transition-all duration-500">
+      {/* Brand Logo */}
+      <div className="flex h-20 items-center justify-between px-6 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center">
+            <Image 
+              src="/logo2.png" 
+              alt="Brain & Muscle Logo" 
+              width={100} 
+              height={80} 
+            />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">
+              Brain <span className="text-nebula-pink">X</span>
+            </h1>
+            <p className="text-[10px] font-bold tracking-wider text-zinc-600 uppercase mt-1">Control Plane</p>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Command Search Bar - Vercel Style */}
-        <div className="group relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-600 transition-colors group-hover:text-zinc-400" />
-          <input 
-            type="text" 
-            placeholder="Search Cluster..."
-            className="h-9 w-64 rounded-md border border-[#222] bg-zinc-950 pl-10 pr-12 text-[10px] uppercase font-bold tracking-widest text-zinc-200 placeholder:text-zinc-700 focus:border-white/20 focus:outline-none transition-all"
-          />
-          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 opacity-40">
-             <Command className="h-2.5 w-2.5" />
-             <span className="text-[9px] font-bold">K</span>
-          </div>
-        </div>
+      {/* Navigation Links */}
+      <nav className="flex-1 space-y-1.5 px-3 py-6 overflow-y-auto custom-scrollbar">
+        {navItems.map((item) => {
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.href);
 
-        <div className="flex items-center gap-2">
-          <button className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-zinc-500 hover:border-[#222] hover:bg-zinc-900 transition-all relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-          </button>
-          <div className="h-8 w-8 rounded-full border border-[#333] bg-zinc-900 flex items-center justify-center group cursor-pointer hover:border-white transition-all">
-             <User className="h-4 w-4 text-zinc-500 group-hover:text-white" />
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`group relative flex items-center gap-4 rounded-xl px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                isActive
+                  ? "bg-white/[0.04] text-white border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+                  : "text-gray-500 hover:bg-white/[0.02] hover:text-gray-300"
+              }`}
+            >
+              <item.icon
+                className={`h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${
+                  isActive
+                    ? "text-nebula-pink"
+                    : "text-gray-500 group-hover:text-gray-400"
+                }`}
+              />
+              {item.label}
+              {isActive && (
+                <div className="absolute right-4 h-1.5 w-1.5 rounded-full bg-nebula-pink shadow-[0_0_12px_#A64D79]" />
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Action Zone: New Deployment & Logout */}
+      <div className="mt-auto border-t border-white/5 p-4 space-y-2">
+        <button 
+          className="btn-primary w-full flex items-center justify-center gap-3 py-4 shadow-2xl !bg-gradient-to-br from-nebula-pink to-nebula-purple border border-white/10 group"
+        >
+          <Rocket className="w-4 h-4 text-white group-hover:animate-bounce" />
+          <span className="flex-1 text-left text-[11px] font-bold uppercase tracking-wider">New Service</span>
+          <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">⌘</span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">N</span>
           </div>
-        </div>
+        </button>
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all group"
+        >
+          <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span>Logout Session</span>
+        </button>
+
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent("bam:open-support"))}
+          className="w-full py-3.5 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-white hover:bg-white/[0.02] transition-all"
+        >
+          Report an Issue
+        </button>
       </div>
-    </header>
+    </aside>
   );
 }

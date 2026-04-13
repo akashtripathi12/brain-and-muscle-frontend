@@ -41,12 +41,11 @@ export default function DistributedMonitorPage() {
   useEffect(() => {
     async function load() {
       try {
-        // Direct lookup by ID — works even for old jobs with migrated user_id
-        const found = await api.getJob(id);
+        const history = await api.getHistory(); // Use history for persistence
+        const found = history.find(j => j.job_id === id) || (await api.getDeployments()).find(j => j.job_id === id);
         setJob(found || null);
       } catch (err) {
         console.error("Failed to load job details:", err);
-        setJob(null);
       } finally {
         setLoading(false);
       }
@@ -134,13 +133,7 @@ export default function DistributedMonitorPage() {
     try {
       const res = await api.getDownloadUrl(id);
       if (!res.download_url) throw new Error("No download URL returned");
-      // Force download via anchor tag instead of opening in a new tab
-      const a = document.createElement("a");
-      a.href = res.download_url;
-      a.download = `result-${id}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      window.open(res.download_url, '_blank');
     } catch (err) {
       alert("Failed to recover result manifest.");
     }

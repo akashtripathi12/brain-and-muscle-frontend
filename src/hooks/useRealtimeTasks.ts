@@ -35,11 +35,13 @@ export function useRealtimeTasks(initialTasks: Deployment[]) {
               p = typeof newTask.payload === 'string' ? JSON.parse(newTask.payload) : newTask.payload;
             } catch (e) { console.error("Failed to parse task payload", e); }
 
+            const jobType = (newTask.job_type || p.job_type || "SERVICE").toUpperCase();
+
             setTasks((prev) => [
               {
                 job_id: newTask.id,
-                job_type: newTask.job_type || p.job_type || "SERVICE",
-                status: mapStatus(newTask.status || p.status || "pending"),
+                job_type: jobType,
+                status: mapStatus(newTask.status ?? p.status),
                 required_cpu: newTask.required_cpu || p.required_cpu || 0,
                 required_ram: newTask.required_ram || p.required_ram || 0,
                 assigned_worker_id: newTask.assigned_worker_id || p.assigned_worker_id || "",
@@ -77,12 +79,23 @@ export function useRealtimeTasks(initialTasks: Deployment[]) {
 }
 
 // Status mapper.
-function mapStatus(status: string): number {
-  switch (status) {
+function mapStatus(status: string | number | undefined | null): number {
+  if (status === undefined || status === null) return 0;
+  
+  // If numeric (from Postgres/Jobs table), return as-is
+  const numStatus = Number(status);
+  if (!isNaN(numStatus)) {
+    return numStatus;
+  }
+
+  // If string label, map it
+  const s = String(status).toLowerCase();
+  switch (s) {
     case "provisioning": return 0;
     case "running": return 1;
     case "completed": return 2;
     case "failed": return 3;
+    case "killed": return 3; // map killed to failed for UI
     default: return 0;
   }
 }

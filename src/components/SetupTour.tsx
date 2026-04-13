@@ -66,12 +66,11 @@ const STEPS: StepData[] = [
     icon: Cpu,
     action: "Download & Install",
     details: [
-      "Download the bam-muscle.exe binary",
-      "Run 'bam-muscle.exe --service install' as Admin (automatically starts)",
-      "If it doesn't start, run 'bam-muscle.exe --service start'"
+      "Download the muscle binary for your system",
+      "Execute the application to join the cluster",
+      "Watch the dashboard to see your node come online"
     ],
-    link: "/bam-muscle.exe",
-    command: "bam-muscle.exe --service install\nbam-muscle.exe --service start"
+    link: "/bam-muscle.exe"
   }
 ];
 
@@ -115,30 +114,26 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
       windows: {
         details: [
           "Download the bam-muscle.exe binary",
-          "Portable Mode: Run 'bam-muscle.exe --cpu 2 --ram 2048'",
-          "Service Mode (Optional): Run 'bam-muscle.exe --service install' as Admin",
+          "Double-click to start the worker node",
           "Default Specs: 2 CPU / 2048 MB RAM unless specified"
         ],
-        link: "/bam-muscle.exe",
-        command: "bam-muscle.exe --cpu 2 --ram 2048"
+        link: "/bam-muscle.exe"
       },
       linux: {
         details: [
           "Download the muscle-linux binary",
-          "Give execution permissions: 'chmod +x muscle-linux'",
-          "Run with specs: './muscle-linux --cpu 2 --ram 2048 &'"
+          "Launch the file to initiate the worker",
+          "It will seamlessly connect to the Brain and listen for jobs"
         ],
-        link: "/muscle-linux",
-        command: "chmod +x muscle-linux\n./muscle-linux --cpu 2 --ram 2048 &"
+        link: "/muscle-linux"
       },
       macos: {
         details: [
           "Download macOS arm64 binary",
-          "Grant permissions: 'chmod +x muscle-macos-arm64'",
-          "Execute: './muscle-macos-arm64 --cpu 2 --ram 2048'"
+          "Execute the application to start the node",
+          "It will securely tunnel back and register to the active fleet"
         ],
-        link: "/muscle-macos-arm64",
-        command: "chmod +x muscle-macos-arm64\n./muscle-macos-arm64 --cpu 2 --ram 2048"
+        link: "/muscle-macos-arm64"
       }
     };
 
@@ -256,16 +251,6 @@ export default function SetupTour({ isLoggedIn = false }: { isLoggedIn?: boolean
                   </div>
                 ))}
               </div>
-
-              {currentStepData.command && (
-                <div className="bg-black/40 rounded-xl p-5 border border-white/5 font-mono text-xs group/code relative overflow-hidden flex flex-col gap-3">
-                     <div className="flex items-center justify-between">
-                       <span className="text-[10px] uppercase text-gray-500 font-bold tracking-widest">CLI Commands</span>
-                       <span className="text-[10px] uppercase text-brand-primary/60 font-bold tracking-widest">Admin Elevation Required</span>
-                     </div>
-                     <code className="text-nebula-pink block whitespace-pre-wrap">{currentStepData.command}</code>
-                </div>
-              )}
             </div>
 
             {/* Right Column: Actions */}

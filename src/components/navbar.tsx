@@ -1,99 +1,125 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import {
+  BookOpen,
+  CheckCircle2,
+  Globe,
+  LayoutDashboard,
+  LogOut,
+  Rocket,
+  Server,
+  Zap,
+} from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { signOut } from "@/app/actions/auth";
-import { Bell, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-export default function Navbar() {
+const navItems = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/deployments", label: "Services", icon: Zap },
+  { href: "/batch", label: "Batch", icon: CheckCircle2 },
+  { href: "/distributed", label: "Distributed", icon: Globe },
+  { href: "/fleet", label: "Muscle Fleet", icon: Server },
+  { href: "/docs", label: "Documentation", icon: BookOpen },
+];
+
+export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [profile, setProfile] = useState<{ name: string; avatar: string; role: string } | null>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    async function getProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const metadata = user.user_metadata || {};
-        setProfile({
-          name: metadata.full_name || user.email?.split("@")[0] || "User",
-          avatar: metadata.avatar_url || "",
-          role: "Root Identity",
-        });
-      }
-    }
-    getProfile();
-  }, [supabase]);
 
   const handleLogout = async () => {
-    await signOut();
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.refresh();
-  };
-
-  const getPageTitle = () => {
-    const segments = pathname.split("/").filter(Boolean);
-    if (segments.length === 0) return "Dashboard";
-    return segments[0].charAt(0).toUpperCase() + segments[0].slice(1);
+    router.push("/");
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-nebula-black/60 px-8 backdrop-blur-xl">
-      {/* Left: Page context */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
-            <span className="text-zinc-600">Infrastructure</span>
-            <span className="text-nebula-pink/40">/</span>
-            <span className="text-white">{getPageTitle()}</span>
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-white/5 bg-nebula-black xl:flex transition-all duration-500">
+      {/* Brand Logo */}
+      <div className="flex h-20 items-center justify-between px-6 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center">
+            <Image 
+              src="/logo2.png" 
+              alt="Brain & Muscle Logo" 
+              width={100} 
+              height={80} 
+            />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">
+              Brain <span className="text-nebula-pink">X</span>
+            </h1>
+            <p className="text-[10px] font-bold tracking-wider text-zinc-600 uppercase mt-1">Control Plane</p>
+          </div>
         </div>
       </div>
 
-      {/* Right: Identity & Notifications */}
-      <div className="flex items-center gap-6">
-        <div className="h-8 w-px bg-white/5" />
+      {/* Navigation Links */}
+      <nav className="flex-1 space-y-1.5 px-3 py-6 overflow-y-auto custom-scrollbar">
+        {navItems.map((item) => {
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.href);
 
-        <div className="flex items-center gap-4 group">
-          <div className="text-right hidden sm:block">
-            <p className="text-[11px] font-bold text-white tracking-tight leading-none">
-              {profile?.name || "Authenticating..."}
-            </p>
-            <p className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider mt-1.5 transition-colors group-hover:text-nebula-pink">
-              {profile?.role || "Syncing..."}
-            </p>
-          </div>
-
-          <div className="relative group/menu">
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-nebula-maroon border border-white/5 transition-transform hover:scale-105 active:scale-95">
-              {profile?.avatar ? (
-                <Image src={profile.avatar} alt={profile.name} width={40} height={40} className="rounded-xl object-cover" />
-              ) : (
-                <User className="h-5 w-5 text-nebula-pink" />
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`group relative flex items-center gap-4 rounded-xl px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                isActive
+                  ? "bg-white/[0.04] text-white border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+                  : "text-gray-500 hover:bg-white/[0.02] hover:text-gray-300"
+              }`}
+            >
+              <item.icon
+                className={`h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${
+                  isActive
+                    ? "text-nebula-pink"
+                    : "text-gray-500 group-hover:text-gray-400"
+                }`}
+              />
+              {item.label}
+              {isActive && (
+                <div className="absolute right-4 h-1.5 w-1.5 rounded-full bg-nebula-pink shadow-[0_0_12px_#A64D79]" />
               )}
-            </button>
+            </Link>
+          );
+        })}
+      </nav>
 
-            {/* Dropdown Menu (Hover-based for density) */}
-            <div className="absolute right-0 top-full pt-2 w-48 scale-95 opacity-0 pointer-events-none group-hover/menu:scale-100 group-hover/menu:opacity-100 group-hover/menu:pointer-events-auto transition-all duration-200">
-              <div className="rounded-xl border border-white/5 bg-nebula-black p-2 shadow-2xl backdrop-blur-2xl">
-                <Link href="/profile" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
-                  <User className="w-4 h-4" />
-                  Profile Account
-                </Link>
-                <div className="h-px bg-white/5 my-1" />
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-xs font-bold text-rose-500/80 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              </div>
-            </div>
+      {/* Action Zone: New Deployment & Logout */}
+      <div className="mt-auto border-t border-white/5 p-4 space-y-2">
+        <button 
+          className="btn-primary w-full flex items-center justify-center gap-3 py-4 shadow-2xl !bg-gradient-to-br from-nebula-pink to-nebula-purple border border-white/10 group"
+        >
+          <Rocket className="w-4 h-4 text-white group-hover:animate-bounce" />
+          <span className="flex-1 text-left text-[11px] font-bold uppercase tracking-wider">New Service</span>
+          <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">⌘</span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">N</span>
           </div>
-        </div>
+        </button>
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all group"
+        >
+          <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span>Logout Session</span>
+        </button>
+
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent("bam:open-support"))}
+          className="w-full py-3.5 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-white hover:bg-white/[0.02] transition-all"
+        >
+          Report an Issue
+        </button>
       </div>
-    </header>
+    </aside>
   );
 }

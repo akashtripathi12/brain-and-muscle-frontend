@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ExternalLink,
@@ -62,43 +62,52 @@ export default function DeploymentsClient({ initialDeployments, error: initialEr
     failed: filteredDeployments.filter(d => d.status === 3).length
   }), [filteredDeployments]);
 
-  // 🧪 DATA DENSITY: Show skeletons during initial connection phase if no data
-  const isLoading = realtimeDeployments.length === 0 && !initialError;
+  const [isSyncing, setIsSyncing] = useState(true);
+
+  // 🧪 DATA DENSITY: Show skeletons during brief initial handshake
+  useEffect(() => {
+    const timer = setTimeout(() => setIsSyncing(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isLoading = isSyncing && realtimeDeployments.length === 0 && !initialError;
 
   return (
-    <div className="w-full space-y-6 pb-20 px-4 md:px-8 lg:px-10">
+    <div className="w-full max-w-6xl mx-auto space-y-10 pb-20 px-6">
       {/* Precision Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-nebula-pink/10 pb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-800 pb-10">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white uppercase">Deployments</h1>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mt-2">Active service telemetry and status</p>
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase">
+            Services <span className="text-nebula-pink font-normal">Control</span>
+          </h1>
+          <p className="text-[12px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-4 font-mono">Active Infrastructure Telemetry</p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-5 px-5 py-2.5 bg-nebula-maroon/20 border border-white/5 rounded-xl text-[10px] font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 px-6 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-[11px] font-black uppercase tracking-widest">
             <div className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-nebula-pink animate-glow-pink" />
-              <span className="text-zinc-200">{stats.running} Nodes Active</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+              <span className="text-white">{stats.running} Active</span>
             </div>
-            <div className="w-px h-3 bg-white/5" />
+            <div className="w-px h-3 bg-zinc-800" />
             <div className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500/50" />
-              <span className="text-zinc-600 font-medium">{stats.failed} Interrupts</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span className="text-zinc-500">{stats.failed} Interrupts</span>
             </div>
           </div>
 
           <button 
             onClick={() => setShowPicker(!showPicker)}
-            className="btn-primary !px-6 !py-3 text-[11px] font-bold uppercase tracking-wider flex items-center gap-3 shadow-2xl !bg-gradient-to-br from-nebula-pink to-nebula-purple transition-all hover:scale-[1.02]"
+            className="btn-primary flex items-center gap-3 px-8 py-4 transition-all"
           >
-            {showPicker ? "Terminate Selection" : "Initialize Service"}
+            {showPicker ? "Terminate Setup" : "Deploy Service"}
             <ChevronRight className={`h-4 w-4 transition-transform duration-500 ${showPicker ? "rotate-90" : ""}`} />
           </button>
         </div>
       </div>
 
       {initialError && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-widest">
+        <div className="flex items-center gap-4 p-5 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-500 text-[11px] font-black uppercase tracking-widest">
           <AlertTriangle className="h-4 w-4" />
           Protocol Error: {initialError}
         </div>
@@ -109,9 +118,9 @@ export default function DeploymentsClient({ initialDeployments, error: initialEr
           <ImportProject />
         </div>
       ) : (
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3">
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
           {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+            Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
           ) : filteredDeployments.length > 0 ? (
             filteredDeployments.map((dep) => (
               <DeploymentCard key={dep.job_id} dep={dep} />
@@ -126,80 +135,90 @@ export default function DeploymentsClient({ initialDeployments, error: initialEr
 }
 
 function DeploymentCard({ dep }: { dep: Deployment }) {
-  const status = statusConfig[dep.status] || statusConfig[3];
+  const statusLabels: Record<number, string> = {
+    0: "Provisioning",
+    1: "Running",
+    2: "Completed",
+    3: "Failed"
+  };
+
+  const statusColors: Record<number, string> = {
+    0: "text-amber-500",
+    1: "text-emerald-500",
+    2: "text-zinc-500",
+    3: "text-rose-500"
+  };
+
+  const statusBg: Record<number, string> = {
+    0: "bg-amber-500/15 border-amber-500/30",
+    1: "bg-emerald-500/15 border-emerald-500/30",
+    2: "bg-zinc-900 border-zinc-800",
+    3: "bg-rose-500/15 border-rose-500/30"
+  };
   
   return (
     <Link
       href={`/deployments/${dep.job_id}`}
-      className="group relative flex flex-col bg-nebula-black p-6 transition-all duration-300 hover:bg-nebula-maroon/20 border border-white/5 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 min-w-[350px] max-w-[420px]"
+      className="group relative flex flex-col bg-black p-8 transition-all duration-300 hover:border-nebula-pink border border-zinc-900 rounded-3xl shadow-xl hover:shadow-2xl border-t-2 border-t-nebula-pink/20"
     >
       {/* Header: Type & Status */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-nebula-maroon border border-white/5 flex items-center justify-center group-hover:border-nebula-pink/30 transition-colors">
-            <Layers className="h-3.5 w-3.5 text-nebula-pink" />
-          </div>
+      <div className="flex items-center justify-between mb-8">
+        <div className="h-10 w-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:bg-nebula-pink/10 transition-colors">
+          <Layers className="h-5 w-5 text-white active:text-nebula-pink" />
         </div>
 
-        <div className={`px-2.5 py-1 rounded-[4px] flex items-center gap-2 border border-white/5 ${status.bg} transition-all`}>
-          <div className={`h-1.5 w-1.5 rounded-full ${status.glow}`} />
-          <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">{status.label}</span>
+        <div className={`px-4 py-1.5 rounded-full flex items-center gap-2.5 border ${statusBg[dep.status] || 'bg-zinc-900 border-zinc-800'} transition-all`}>
+          <div className={`h-1.5 w-1.5 rounded-full ${dep.status === 1 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-zinc-500'}`} />
+          <span className={`text-[10px] font-black uppercase tracking-widest ${statusColors[dep.status] || 'text-zinc-500'}`}>
+            {statusLabels[dep.status] || "Unknown"}
+          </span>
         </div>
       </div>
 
-      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider group-hover:text-nebula-pink transition-colors">
-        Service ID
-      </p>
-      <h2 className="mt-2 text-xl font-bold tracking-tight text-white font-mono uppercase truncate">
-        {dep.job_id}
-      </h2>
+      <div className="space-y-2">
+        <p className="text-[11px] font-black text-zinc-600 uppercase tracking-[0.2em] font-mono">
+          Endpoint Identifier
+        </p>
+        <h2 className="text-2xl font-black tracking-tighter text-white font-mono uppercase truncate group-hover:text-zinc-400 transition-colors">
+          {dep.job_id.split('-')[0]}<span className="text-zinc-800">-{dep.job_id.split('-').slice(1).join('-')}</span>
+        </h2>
+      </div>
 
       {/* Internal Specs Row */}
-      <div className="grid grid-cols-3 gap-2 mb-6 mt-6">
-        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex flex-col gap-1.5">
-          <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest leading-none">CPU</span>
-          <span className="text-[11px] font-bold text-zinc-200 font-mono flex items-center gap-1.5">
-            <Cpu className="h-3 w-3 text-nebula-pink/60" />
-            {dep.required_cpu}
+      <div className="grid grid-cols-2 gap-4 mb-10 mt-10">
+        <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 flex flex-col gap-2">
+          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Compute Allocation</span>
+          <span className="text-[13px] font-bold text-white font-mono flex items-center gap-2">
+            <Cpu className="h-3.5 w-3.5 text-zinc-500" />
+            {dep.required_cpu} vCPU
           </span>
         </div>
-        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex flex-col gap-1.5">
-          <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest leading-none">RAM</span>
-          <span className="text-[11px] font-bold text-zinc-200 font-mono flex items-center gap-1.5">
-            <HardDrive className="h-3 w-3 text-nebula-pink/60" />
+        <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 flex flex-col gap-2">
+          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Memory Reserved</span>
+          <span className="text-[13px] font-bold text-white font-mono flex items-center gap-2">
+            <HardDrive className="h-3.5 w-3.5 text-zinc-500" />
             {formatBytes(dep.required_ram)}
-          </span>
-        </div>
-        <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex flex-col gap-1.5 text-right">
-          <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest leading-none">Last Active</span>
-          <span className="text-[11px] font-bold text-zinc-500 font-mono">
-            {timeAgo(dep.created_at)}
           </span>
         </div>
       </div>
 
       {/* Infrastructure Bar */}
-      <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Server className="h-3 w-3 text-nebula-pink/40" />
-          <span className="text-[10px] font-mono font-medium text-zinc-500 tracking-tight">
-            {dep.assigned_worker_id ? `node:${dep.assigned_worker_id.split("-")[1]}` : "pending_assign"}
+      <div className="mt-auto pt-6 border-t border-zinc-800 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Server className="h-4 w-4 text-zinc-700" />
+          <span className="text-[11px] font-mono font-bold text-zinc-600 tracking-tight uppercase">
+            {dep.assigned_worker_id ? `node:${dep.assigned_worker_id.substring(0, 8)}` : "cluster_pending"}
           </span>
         </div>
 
         {dep.public_route ? (
-          <div className="flex items-center gap-2 text-nebula-pink/80 group-hover:text-nebula-pink transition-colors">
-            <Activity className="h-3 w-3" />
-            <span className="text-[10px] font-mono font-bold tracking-tighter uppercase italic">Active_Route</span>
+          <div className="flex items-center gap-2.5 text-white transition-colors">
+            <Activity className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="text-[11px] font-mono font-black tracking-widest uppercase">Live</span>
           </div>
         ) : (
-          <div className="h-1 w-12 bg-white/5 rounded-full" />
+          <div className="h-1 w-16 bg-zinc-900 rounded-full" />
         )}
-      </div>
-
-      {/* Invisible Hover Action */}
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <MoreVertical className="h-4 w-4 text-zinc-700" />
       </div>
     </Link>
   );
@@ -207,13 +226,13 @@ function DeploymentCard({ dep }: { dep: Deployment }) {
 
 function EmptyState() {
   return (
-    <div className="col-span-full h-80 flex flex-col items-center justify-center gap-4 text-center bg-nebula-black p-12">
-      <div className="h-12 w-12 rounded-xl bg-nebula-maroon border border-white/5 flex items-center justify-center mb-2">
-        <Server className="h-6 w-6 text-nebula-pink/40" />
+    <div className="col-span-full h-80 flex flex-col items-center justify-center gap-6 text-center bg-black border border-zinc-800 rounded-3xl p-12">
+      <div className="h-14 w-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+        <Server className="h-7 w-7 text-zinc-700" />
       </div>
-      <div className="space-y-1">
-        <h4 className="text-sm font-bold text-zinc-200 uppercase tracking-tight">No Active Nodes</h4>
-        <p className="text-[11px] font-medium text-zinc-600 uppercase tracking-wider max-w-xs">Cluster data-plane is idle. Launch a service to begin execution.</p>
+      <div className="space-y-2">
+        <h4 className="text-[12px] font-black text-white uppercase tracking-[0.2em]">Zero Active Deployments</h4>
+        <p className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest max-w-xs mx-auto">The cluster control plane is currently idle. Initialize a service to begin.</p>
       </div>
     </div>
   );
@@ -221,23 +240,20 @@ function EmptyState() {
 
 function SkeletonCard() {
   return (
-    <div className="bg-nebula-black p-6 border border-white/5 rounded-2xl animate-pulse">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2 items-center">
-          <div className="h-7 w-7 bg-white/5 rounded-md" />
-          <div className="space-y-2">
-            <div className="h-3 w-24 bg-white/5 rounded" />
-            <div className="h-2 w-16 bg-white/5 rounded" />
-          </div>
-        </div>
-        <div className="h-5 w-20 bg-white/5 rounded-full" />
+    <div className="bg-black p-8 border border-zinc-800 rounded-3xl animate-pulse">
+      <div className="flex justify-between items-center mb-10">
+        <div className="h-10 w-10 bg-zinc-900 rounded-xl" />
+        <div className="h-6 w-24 bg-zinc-900 rounded-full" />
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-6">
-        <div className="h-12 bg-white/5 rounded-lg" />
-        <div className="h-12 bg-white/5 rounded-lg" />
-        <div className="h-12 bg-white/5 rounded-lg" />
+      <div className="space-y-4 mb-10">
+        <div className="h-4 w-32 bg-zinc-900 rounded" />
+        <div className="h-8 w-64 bg-zinc-900 rounded-lg" />
       </div>
-      <div className="h-4 w-full bg-white/5 rounded mt-auto" />
+      <div className="grid grid-cols-2 gap-4 mb-10">
+        <div className="h-16 bg-zinc-900 rounded-2xl" />
+        <div className="h-16 bg-zinc-900 rounded-2xl" />
+      </div>
+      <div className="h-4 w-full bg-zinc-900 rounded" />
     </div>
   );
 }

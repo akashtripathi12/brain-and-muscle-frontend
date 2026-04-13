@@ -8,6 +8,7 @@ import {
   Globe,
   LayoutDashboard,
   LogOut,
+  Rocket,
   Server,
   Zap,
 } from "lucide-react";
@@ -20,7 +21,7 @@ const navItems = [
   { href: "/deployments", label: "Services", icon: Zap },
   { href: "/batch", label: "Batch", icon: CheckCircle2 },
   { href: "/distributed", label: "Distributed", icon: Globe },
-  { href: "/fleet", label: "Fleet", icon: Server },
+  { href: "/fleet", label: "Muscle Fleet", icon: Server },
   { href: "/docs", label: "Documentation", icon: BookOpen },
 ];
 
@@ -36,27 +37,29 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-[#111] bg-black xl:flex transition-all duration-300">
-      {/* Brand Logo - Monotone Vercel Style */}
-      <div className="flex h-20 items-center justify-between px-6">
-        <div className="flex items-center gap-3 grayscale brightness-200">
-          <Image 
-            src="/logo2.png" 
-            alt="Brain & Muscle Logo" 
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-white/5 bg-nebula-black xl:flex transition-all duration-500">
+      {/* Brand Logo */}
+      <div className="flex h-20 items-center justify-between px-6 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center">
+            <Image 
+              src="/logo2.png" 
+              alt="Brain & Muscle Logo" 
               width={100} 
               height={80} 
-          />
+            />
+          </div>
           <div>
-            <h1 className="text-base font-black tracking-tight text-white uppercase leading-none">
-              Brain <span className="text-zinc-500 font-light italic">X</span>
+            <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">
+              Brain <span className="text-nebula-pink">X</span>
             </h1>
-            <p className="text-[10px] font-bold tracking-[0.2em] text-zinc-600 uppercase mt-1">Control Plane</p>
+            <p className="text-[10px] font-bold tracking-wider text-zinc-600 uppercase mt-1">Control Plane</p>
           </div>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 space-y-1 px-3 py-6 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 space-y-1.5 px-3 py-6 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
           const isActive =
             item.href === "/"
@@ -67,40 +70,54 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex items-center gap-3 rounded-md px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors duration-200 ${
+              className={`group relative flex items-center gap-4 rounded-xl px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
                 isActive
-                  ? "bg-zinc-800/20 text-white border border-white/5 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-100 hover:bg-zinc-900"
+                  ? "bg-white/[0.04] text-white border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+                  : "text-gray-500 hover:bg-white/[0.02] hover:text-gray-300"
               }`}
             >
               <item.icon
-                className={`h-4 w-4 ${
+                className={`h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${
                   isActive
-                    ? "text-white"
-                    : "text-zinc-600 group-hover:text-zinc-400"
+                    ? "text-nebula-pink"
+                    : "text-gray-500 group-hover:text-gray-400"
                 }`}
               />
               {item.label}
+              {isActive && (
+                <div className="absolute right-4 h-1.5 w-1.5 rounded-full bg-nebula-pink shadow-[0_0_12px_#A64D79]" />
+              )}
             </Link>
           );
         })}
       </nav>
 
-      {/* Action Zone: Minimalist Logout & Support */}
-      <div className="mt-auto border-t border-[#111] p-4 space-y-2">
+      {/* Action Zone: New Deployment & Logout */}
+      <div className="mt-auto border-t border-white/5 p-4 space-y-2">
+        <button 
+          className="btn-primary w-full flex items-center justify-center gap-3 py-4 shadow-2xl !bg-gradient-to-br from-nebula-pink to-nebula-purple border border-white/10 group"
+        >
+          <Rocket className="w-4 h-4 text-white group-hover:animate-bounce" />
+          <span className="flex-1 text-left text-[11px] font-bold uppercase tracking-wider">New Service</span>
+          <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">⌘</span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/5">N</span>
+          </div>
+        </button>
+
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 hover:bg-red-500/5 transition-all group"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all group"
         >
           <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          <span>Sign Out</span>
+          <span>Logout Session</span>
         </button>
 
         <button 
           onClick={() => window.dispatchEvent(new CustomEvent("bam:open-support"))}
-          className="w-full py-2.5 rounded-md text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-700 hover:text-white hover:bg-zinc-900 transition-all border border-transparent hover:border-[#222]"
+          className="w-full py-3.5 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-white hover:bg-white/[0.02] transition-all"
         >
-          Support Terminal
+          Report an Issue
         </button>
       </div>
     </aside>

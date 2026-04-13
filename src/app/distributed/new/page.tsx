@@ -232,7 +232,7 @@ export default function NewDistributedPage() {
                     </div>
                     <span className="text-xs font-black text-emerald-400 font-mono">{cpu} Cores</span>
                  </div>
-                 <input type="range" min={1} max={16} value={cpu} onChange={(e) => setCpu(Number(e.target.value))} className="w-full accent-emerald-500 h-1" />
+                 <input type="range" min={0.1} max={16} step={0.1} value={cpu} onChange={(e) => setCpu(Number(e.target.value))} className="w-full accent-emerald-500 h-1" />
 
                  <div className="h-px bg-white/5 my-2" />
 

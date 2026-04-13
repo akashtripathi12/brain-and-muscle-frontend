@@ -354,7 +354,7 @@ export default function BatchDeployPage() {
                   </div>
                   <input
                     type="range"
-                    min={1} max={16}
+                    min={0.1} max={16} step={0.1}
                     value={cpu}
                     onChange={(e) => setCpu(Number(e.target.value))}
                     className="w-full h-1.5 appearance-none rounded-lg bg-nebula-black border border-white/5 cursor-pointer accent-nebula-pink"

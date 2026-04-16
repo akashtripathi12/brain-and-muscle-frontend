@@ -164,13 +164,13 @@ export default function DocumentationPage() {
                    </p>
                    
                    <p className="text-zinc-300 text-sm font-bold mb-2">Linux / Ubuntu</p>
-                   <CodeSnippet language="bash" code={`chmod +x bam-muscle-linux\n./bam-muscle-linux --cpu 4.0 --ram 4096`} />
+                   <CodeSnippet language="bash" code={`chmod +x muscle-linux\n./muscle-linux --cpu 4.0 --ram 4096`} />
                    
                    <p className="text-zinc-300 text-sm font-bold mb-2 mt-6">macOS (Apple Silicon)</p>
-                   <CodeSnippet language="bash" code={`chmod +x bam-muscle-mac-silicon\n./bam-muscle-mac-silicon --cpu 4.0 --ram 4096`} />
+                   <CodeSnippet language="bash" code={`chmod +x muscle-macos-arm64\n./muscle-macos-arm64 --cpu 4.0 --ram 4096`} />
                    
                    <p className="text-zinc-300 text-sm font-bold mb-2 mt-6">Windows</p>
-                   <CodeSnippet language="powershell" code={`.\\bam-muscle-public.exe --cpu 4.0 --ram 4096`} />
+                   <CodeSnippet language="powershell" code={`.\\bam-muscle.exe --cpu 4.0 --ram 4096`} />
                 </div>
 
                 <div>
@@ -181,15 +181,15 @@ export default function DocumentationPage() {
                    
                    <h4 className="text-lg font-bold text-white mb-2">Linux (systemd)</h4>
                    <p className="text-zinc-400 mb-4 text-sm">Create a unit file <code>/etc/systemd/system/bam-muscle.service</code>, then execute <code>systemctl enable --now bam-muscle.service</code>.</p>
-                   <CodeSnippet language="ini" code={`[Unit]\nDescription=Brain & Muscle Worker Node\nAfter=network.target docker.service\n\n[Service]\nExecStart=/usr/local/bin/bam-muscle-linux --cpu 4.0 --ram 4096\nRestart=always\nUser=muscleuser\n\n[Install]\nWantedBy=multi-user.target`} />
+                   <CodeSnippet language="ini" code={`[Unit]\nDescription=Brain & Muscle Worker Node\nAfter=network.target docker.service\n\n[Service]\nExecStart=/usr/local/bin/muscle-linux --cpu 4.0 --ram 4096\nRestart=always\nUser=muscleuser\n\n[Install]\nWantedBy=multi-user.target`} />
 
                    <h4 className="text-lg font-bold text-white mt-12 mb-2">macOS (launchd)</h4>
                    <p className="text-zinc-400 mb-4 text-sm">Create a <code>.plist</code> file in <code>/Library/LaunchDaemons/com.bam.muscle.plist</code>. Execute <code>sudo launchctl load -w /Library/LaunchDaemons/com.bam.muscle.plist</code>.</p>
-                   <CodeSnippet language="xml" code={`<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n    <key>Label</key>\n    <string>com.bam.muscle</string>\n    <key>ProgramArguments</key>\n    <array>\n        <string>/usr/local/bin/bam-muscle-mac-silicon</string>\n        <string>--cpu</string>\n        <string>4.0</string>\n    </array>\n    <key>KeepAlive</key>\n    <true/>\n</dict>\n</plist>`} />
+                   <CodeSnippet language="xml" code={`<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n    <key>Label</key>\n    <string>com.bam.muscle</string>\n    <key>ProgramArguments</key>\n    <array>\n        <string>/usr/local/bin/muscle-macos-arm64</string>\n        <string>--cpu</string>\n        <string>4.0</string>\n    </array>\n    <key>KeepAlive</key>\n    <true/>\n</dict>\n</plist>`} />
 
                    <h4 className="text-lg font-bold text-white mt-12 mb-2">Windows (Windows Services / Session 0)</h4>
                    <p className="text-zinc-400 mb-4 text-sm">It installs itself natively as a Windows Service running in Session 0, ensuring complete isolation from interactive user sessions.</p>
-                   <CodeSnippet language="powershell" code={`# Install the binary as a background service (auto-starts instantly)\n.\\bam-muscle-public.exe --service install --cpu 4.0 --ram 4096`} />
+                   <CodeSnippet language="powershell" code={`# Install the binary as a background service (auto-starts instantly)\n.\\bam-muscle.exe --service install --cpu 4.0 --ram 4096`} />
                 </div>
               </div>
             </section>

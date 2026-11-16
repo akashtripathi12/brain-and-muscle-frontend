@@ -40,9 +40,12 @@ export default function SettingsPage() {
           </label>
           <input
             type="password"
-            defaultValue={process.env.NEXT_PUBLIC_BRAIN_API_KEY || ""}
-            className="mt-2 w-full rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 font-mono text-sm text-white outline-none focus:border-emerald-500/50"
+            disabled
+            defaultValue="••••••••••••••••"
+            title="The Brain API key is stored server-side and is never sent to the browser."
+            className="mt-2 w-full rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 font-mono text-sm text-gray-500 outline-none cursor-not-allowed"
           />
+          <p className="mt-1 text-xs text-gray-500">Managed server-side (BRAIN_API_KEY).</p>
         </div>
       </div>
 

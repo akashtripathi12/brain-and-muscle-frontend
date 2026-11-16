@@ -3,7 +3,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
-import jwt from "jsonwebtoken";
 
 const BRAIN_URL = process.env.NEXT_PUBLIC_BRAIN_URL || "http://localhost:8888";
 const WEBHOOK_URL_BASE = process.env.BRAIN_WEBHOOK_URL || BRAIN_URL;
@@ -208,7 +207,7 @@ export async function finalizeDeployment(config: DeploymentConfig) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-API-Key": process.env.NEXT_PUBLIC_BRAIN_API_KEY || process.env.BRAIN_API_KEY || "",
+      "X-API-Key": process.env.BRAIN_API_KEY || "",
       "X-User-Identity": user.email || user.id,
       "Authorization": `Bearer ${session.access_token}`,
     },
@@ -225,24 +224,52 @@ export async function finalizeDeployment(config: DeploymentConfig) {
 }
 
 /**
- * Fetch repositories for the authenticated user from GitHub
+ * Fetch the GitHub repositories the *logged-in user* can access through our GitHub App.
+ *
+ * Security: we list repos with the user's own OAuth token via
+ * /user/installations/{id}/repositories, so GitHub only returns repos THIS user
+ * has access to. (Using the app's installation token would return every repo in
+ * the installation, including other people's.)
  */
 export async function getGitHubRepositories() {
   const supabase = await createClient();
+
+  // getUser() verifies the session with Supabase; getSession() is only for provider_token.
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   const { data: { session } } = await supabase.auth.getSession();
-  
+
+  if (authError || !user) {
+    return { error: "Unauthorized: Please log in first" };
+  }
   if (!session?.provider_token) {
     console.warn("[github] No provider token found in session.");
     return { error: "GITHUB_TOKEN_MISSING" };
   }
 
-  // 1. Get User's Installations
-  const userInstallationsRes = await fetch("https://api.github.com/user/installations", {
-    headers: {
-      "Authorization": `Bearer ${session.provider_token}`,
-      "Accept": "application/vnd.github+json",
-    },
-    cache: 'no-store',
+  const ghHeaders = {
+    "Authorization": `Bearer ${session.provider_token}`,
+    "Accept": "application/vnd.github+json",
+  };
+
+  // 1. Confirm the GitHub token belongs to the same person as the Supabase user.
+  const meRes = await fetch("https://api.github.com/user", { headers: ghHeaders, cache: "no-store" });
+  if (!meRes.ok) {
+    // Token revoked/expired -> ask the user to reconnect GitHub.
+    return { error: "GITHUB_TOKEN_MISSING" };
+  }
+  const ghUser = await meRes.json();
+
+  const githubIdentity = user.identities?.find((i) => i.provider === "github");
+  const expectedGithubId = githubIdentity?.id ?? user.user_metadata?.provider_id;
+  if (expectedGithubId && String(ghUser.id) !== String(expectedGithubId)) {
+    console.warn(`[github] Token/user mismatch for ${user.id}`);
+    return { error: "GITHUB_TOKEN_MISSING" };
+  }
+
+  // 2. Find our GitHub App's installations that this user can access.
+  const userInstallationsRes = await fetch("https://api.github.com/user/installations?per_page=100", {
+    headers: ghHeaders,
+    cache: "no-store",
   });
 
   if (!userInstallationsRes.ok) {
@@ -253,80 +280,36 @@ export async function getGitHubRepositories() {
 
   const { installations } = await userInstallationsRes.json();
   const appId = process.env.GITHUB_APP_ID;
+  const appInstallations = ((installations || []) as { id: number; app_id: number }[]).filter(
+    (inst) => String(inst.app_id) === appId
+  );
 
-  // Find the installation for our specific GitHub App
-  const appInstallation = installations.find((inst: any) => inst.app_id.toString() === appId);
-
-  if (!appInstallation) {
-    // User hasn't installed the app
+  if (appInstallations.length === 0) {
     return { error: `GitHub App (ID: ${appId}) is not installed on this account.` };
   }
 
-  // 2. Generate JWT for the GitHub App
-  const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
-  if (!privateKey) {
-    console.error("[github] Missing GITHUB_APP_PRIVATE_KEY in environment variables.");
-    return { error: "Server configuration error (missing private key). Please contact support." };
-  }
+  // 3. List repos per installation using the USER token (scoped to what this user can see).
+  const seen = new Map<number, { id: number; full_name: string; private: boolean }>();
+  for (const inst of appInstallations) {
+    for (let page = 1; page <= 10; page++) {
+      const reposRes = await fetch(
+        `https://api.github.com/user/installations/${inst.id}/repositories?per_page=100&page=${page}`,
+        { headers: ghHeaders, cache: "no-store" }
+      );
 
-  // Normalize the private key (handle actual newlines if stored as a single line string)
-  const normalizedKey = privateKey.replace(/\\n/g, '\n');
+      if (!reposRes.ok) {
+        const error = await reposRes.text();
+        console.error("[github] Failed to fetch installation repositories:", error);
+        return { error: "Failed to fetch installation repositories: " + error };
+      }
 
-  const now = Math.floor(Date.now() / 1000);
-  const token = jwt.sign(
-    {
-      iat: now - 60, // Issued 60 seconds ago (clock drift)
-      exp: now + 10 * 60, // Expires in 10 minutes
-      iss: appId,
-    },
-    normalizedKey,
-    { algorithm: "RS256" }
-  );
-
-  // 3. Exchange JWT for Installation Access Token
-  const tokenRes = await fetch(`https://api.github.com/app/installations/${appInstallation.id}/access_tokens`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Accept": "application/vnd.github+json",
-    },
-    cache: 'no-store',
-  });
-
-  if (!tokenRes.ok) {
-    const error = await tokenRes.text();
-    console.error("[github] Failed to generate installation token:", error);
-    try {
-      const errObj = JSON.parse(error);
-      return { error: "GitHub App Auth Failed: " + (errObj.message || error) };
-    } catch (e) {
-      return { error: "Failed to authenticate with GitHub App." };
+      const { repositories } = await reposRes.json();
+      for (const r of repositories || []) {
+        seen.set(r.id, { id: r.id, full_name: r.full_name, private: r.private });
+      }
+      if (!repositories || repositories.length < 100) break;
     }
   }
 
-  const { token: installationToken } = await tokenRes.json();
-
-  // 4. Fetch repositories accessible to this installation
-  const reposRes = await fetch("https://api.github.com/installation/repositories?per_page=100", {
-    headers: {
-      "Authorization": `Bearer ${installationToken}`,
-      "Accept": "application/vnd.github+json",
-    },
-    cache: 'no-store',
-  });
-
-  if (!reposRes.ok) {
-    const error = await reposRes.text();
-    console.error("[github] Failed to fetch installation repositories:", error);
-    return { error: "Failed to fetch installation repositories: " + error };
-  }
-
-  const { repositories } = await reposRes.json();
-  return {
-    repos: repositories.map((r: any) => ({
-      id: r.id,
-      full_name: r.full_name,
-      private: r.private,
-    }))
-  };
+  return { repos: Array.from(seen.values()) };
 }

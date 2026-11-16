@@ -5,6 +5,11 @@
 
 const BRAIN_URL = process.env.NEXT_PUBLIC_BRAIN_URL || "http://localhost:8888";
 
+/** Maps a Brain endpoint like "/api/logs/123" to the browser-safe proxy path "/api/brain/logs/123". */
+export function brainProxyPath(endpoint: string): string {
+  return endpoint.replace(/^\/api\//, "/api/brain/");
+}
+
 export interface Node {
   id: string;
   ip: string;
@@ -48,24 +53,32 @@ export interface DeployRequest {
   gather_script_path?: string;
 }
 
+const isServer = typeof window === "undefined";
+
+/**
+ * In the browser, requests go through the same-origin /api/brain proxy, which
+ * attaches the server-only API key and the verified user identity.
+ * On the server (Server Components / Actions), we call the Brain directly.
+ */
 async function brainFetch<T>(endpoint: string, options: RequestInit & { token?: string; userEmail?: string } = {}): Promise<T> {
-  const url = `${BRAIN_URL}${endpoint}`;
-  
-  const headers = new Headers(options.headers);
+  const { token, userEmail, ...init } = options;
+
+  const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
 
-  // Auth logic: Prioritize user JWT, always attach identity for task ownership.
-  if (options.token) {
-    headers.set("Authorization", `Bearer ${options.token}`);
-  }
-  // Always send API key for access + X-User-Identity so Brain knows who owns the task
-  headers.set("X-API-Key", process.env.NEXT_PUBLIC_BRAIN_API_KEY || "");
-  if (options.userEmail) {
-    headers.set("X-User-Identity", options.userEmail);
+  let url: string;
+  if (isServer) {
+    url = `${BRAIN_URL}${endpoint}`;
+    // Prefer the user's JWT; the API key (server-only env) is the fallback.
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    headers.set("X-API-Key", process.env.BRAIN_API_KEY || "");
+    if (userEmail) headers.set("X-User-Identity", userEmail);
+  } else {
+    url = brainProxyPath(endpoint);
   }
 
   const response = await fetch(url, {
-    ...options,
+    ...init,
     headers,
   });
 

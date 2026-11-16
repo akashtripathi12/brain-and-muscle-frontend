@@ -69,11 +69,7 @@ export default function DistributedMonitorPage() {
 
     async function streamLogs() {
       try {
-        const brainUrl = process.env.NEXT_PUBLIC_BRAIN_URL || "http://localhost:8888";
-        const apiKey = process.env.NEXT_PUBLIC_BRAIN_API_KEY || "";
-
-        const response = await fetch(`${brainUrl}/api/logs/${id}`, {
-          headers: { "X-API-Key": apiKey },
+        const response = await fetch(`/api/brain/logs/${id}`, {
           signal: controller.signal,
         });
 
